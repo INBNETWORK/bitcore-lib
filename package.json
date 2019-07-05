@@ -1,5 +1,5 @@
 {
-  "_from": "bitcore-lib@^8.1.1",
+  "_from": "bitcore-lib@^8.3.4",
   "_id": "bitcore-lib@8.3.4",
   "_inBundle": false,
   "_integrity": "sha512-4wMOn3/QnzXhNwj/GONKz7T0WIlWMYChuYrYc4c/cL0Dz0jlHsd2KFkh/98qfG+/MlQOfeemx/g8D1qg1euLtQ==",
@@ -15,20 +15,21 @@
   "_requested": {
     "type": "range",
     "registry": true,
-    "raw": "bitcore-lib@^8.1.1",
+    "raw": "bitcore-lib@^8.3.4",
     "name": "bitcore-lib",
     "escapedName": "bitcore-lib",
-    "rawSpec": "^8.1.1",
+    "rawSpec": "^8.3.4",
     "saveSpec": null,
-    "fetchSpec": "^8.1.1"
+    "fetchSpec": "^8.3.4"
   },
   "_requiredBy": [
+    "#USER",
     "/",
     "/bitcore-mnemonic"
   ],
   "_resolved": "https://registry.npmjs.org/bitcore-lib/-/bitcore-lib-8.3.4.tgz",
   "_shasum": "9a50bbbcc0e661886d26a5a2358f83653e893d9d",
-  "_spec": "bitcore-lib@^8.1.1",
+  "_spec": "bitcore-lib@^8.3.4",
   "_where": "/Users/iob/Documents/Projects/inb-app",
   "author": {
     "name": "BitPay",
