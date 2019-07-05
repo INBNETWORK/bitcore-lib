@@ -1,22 +1,35 @@
 'use strict';
 
+function _instanceof(left, right) { if (right != null && typeof Symbol !== "undefined" && right[Symbol.hasInstance]) { return right[Symbol.hasInstance](left); } else { return left instanceof right; } }
+
 var _ = require('lodash');
+
 var inherits = require('inherits');
+
 var Transaction = require('../transaction');
+
 var Input = require('./input');
+
 var Output = require('../output');
+
 var $ = require('../../util/preconditions');
 
 var Script = require('../../script');
-var Signature = require('../../crypto/signature');
-var Sighash = require('../sighash');
-var PublicKey = require('../../publickey');
-var BufferUtil = require('../../util/buffer');
-var TransactionSignature = require('../signature');
 
+var Signature = require('../../crypto/signature');
+
+var Sighash = require('../sighash');
+
+var PublicKey = require('../../publickey');
+
+var BufferUtil = require('../../util/buffer');
+
+var TransactionSignature = require('../signature');
 /**
  * @constructor
  */
+
+
 function MultiSigInput(input, pubkeys, threshold, signatures, opts) {
   opts = opts || {};
   Input.apply(this, arguments);
@@ -24,56 +37,66 @@ function MultiSigInput(input, pubkeys, threshold, signatures, opts) {
   pubkeys = pubkeys || input.publicKeys;
   threshold = threshold || input.threshold;
   signatures = signatures || input.signatures;
+
   if (opts.noSorting) {
-    this.publicKeys = pubkeys
-  } else  {
-    this.publicKeys = _.sortBy(pubkeys, function(publicKey) { return publicKey.toString('hex'); });
+    this.publicKeys = pubkeys;
+  } else {
+    this.publicKeys = _.sortBy(pubkeys, function (publicKey) {
+      return publicKey.toString('hex');
+    });
   }
-  $.checkState(Script.buildMultisigOut(this.publicKeys, threshold).equals(this.output.script),
-    'Provided public keys don\'t match to the provided output script');
+
+  $.checkState(Script.buildMultisigOut(this.publicKeys, threshold).equals(this.output.script), 'Provided public keys don\'t match to the provided output script');
   this.publicKeyIndex = {};
-  _.each(this.publicKeys, function(publicKey, index) {
+
+  _.each(this.publicKeys, function (publicKey, index) {
     self.publicKeyIndex[publicKey.toString()] = index;
   });
-  this.threshold = threshold;
-  // Empty array of signatures
+
+  this.threshold = threshold; // Empty array of signatures
+
   this.signatures = signatures ? this._deserializeSignatures(signatures) : new Array(this.publicKeys.length);
 }
+
 inherits(MultiSigInput, Input);
 
-MultiSigInput.prototype.toObject = function() {
+MultiSigInput.prototype.toObject = function () {
   var obj = Input.prototype.toObject.apply(this, arguments);
   obj.threshold = this.threshold;
-  obj.publicKeys = _.map(this.publicKeys, function(publicKey) { return publicKey.toString(); });
+  obj.publicKeys = _.map(this.publicKeys, function (publicKey) {
+    return publicKey.toString();
+  });
   obj.signatures = this._serializeSignatures();
   return obj;
 };
 
-MultiSigInput.prototype._deserializeSignatures = function(signatures) {
-  return _.map(signatures, function(signature) {
+MultiSigInput.prototype._deserializeSignatures = function (signatures) {
+  return _.map(signatures, function (signature) {
     if (!signature) {
       return undefined;
     }
+
     return new TransactionSignature(signature);
   });
 };
 
-MultiSigInput.prototype._serializeSignatures = function() {
-  return _.map(this.signatures, function(signature) {
+MultiSigInput.prototype._serializeSignatures = function () {
+  return _.map(this.signatures, function (signature) {
     if (!signature) {
       return undefined;
     }
+
     return signature.toObject();
   });
 };
 
-MultiSigInput.prototype.getSignatures = function(transaction, privateKey, index, sigtype) {
-  $.checkState(this.output instanceof Output);
+MultiSigInput.prototype.getSignatures = function (transaction, privateKey, index, sigtype) {
+  $.checkState(_instanceof(this.output, Output));
   sigtype = sigtype || Signature.SIGHASH_ALL;
-
   var self = this;
   var results = [];
-  _.each(this.publicKeys, function(publicKey) {
+
+  _.each(this.publicKeys, function (publicKey) {
     if (publicKey.toString() === privateKey.publicKey.toString()) {
       results.push(new TransactionSignature({
         publicKey: privateKey.publicKey,
@@ -89,75 +112,62 @@ MultiSigInput.prototype.getSignatures = function(transaction, privateKey, index,
   return results;
 };
 
-MultiSigInput.prototype.addSignature = function(transaction, signature) {
+MultiSigInput.prototype.addSignature = function (transaction, signature) {
   $.checkState(!this.isFullySigned(), 'All needed signatures have already been added');
-  $.checkArgument(!_.isUndefined(this.publicKeyIndex[signature.publicKey.toString()]),
-    'Signature has no matching public key');
+  $.checkArgument(!_.isUndefined(this.publicKeyIndex[signature.publicKey.toString()]), 'Signature has no matching public key');
   $.checkState(this.isValidSignature(transaction, signature));
   this.signatures[this.publicKeyIndex[signature.publicKey.toString()]] = signature;
+
   this._updateScript();
+
   return this;
 };
 
-MultiSigInput.prototype._updateScript = function() {
-  this.setScript(Script.buildMultisigIn(
-    this.publicKeys,
-    this.threshold,
-    this._createSignatures()
-  ));
+MultiSigInput.prototype._updateScript = function () {
+  this.setScript(Script.buildMultisigIn(this.publicKeys, this.threshold, this._createSignatures()));
   return this;
 };
 
-MultiSigInput.prototype._createSignatures = function() {
-  return _.map(
-    _.filter(this.signatures, function(signature) { return !_.isUndefined(signature); }),
-    function(signature) {
-      return BufferUtil.concat([
-        signature.signature.toDER(),
-        BufferUtil.integerAsSingleByteBuffer(signature.sigtype)
-      ]);
-    }
-  );
-};
-
-MultiSigInput.prototype.clearSignatures = function() {
-  this.signatures = new Array(this.publicKeys.length);
-  this._updateScript();
-};
-
-MultiSigInput.prototype.isFullySigned = function() {
-  return this.countSignatures() === this.threshold;
-};
-
-MultiSigInput.prototype.countMissingSignatures = function() {
-  return this.threshold - this.countSignatures();
-};
-
-MultiSigInput.prototype.countSignatures = function() {
-  return _.reduce(this.signatures, function(sum, signature) {
-    return sum + (!!signature);
-  }, 0);
-};
-
-MultiSigInput.prototype.publicKeysWithoutSignature = function() {
-  var self = this;
-  return _.filter(this.publicKeys, function(publicKey) {
-    return !(self.signatures[self.publicKeyIndex[publicKey.toString()]]);
+MultiSigInput.prototype._createSignatures = function () {
+  return _.map(_.filter(this.signatures, function (signature) {
+    return !_.isUndefined(signature);
+  }), function (signature) {
+    return BufferUtil.concat([signature.signature.toDER(), BufferUtil.integerAsSingleByteBuffer(signature.sigtype)]);
   });
 };
 
-MultiSigInput.prototype.isValidSignature = function(transaction, signature) {
-  // FIXME: Refactor signature so this is not necessary
-  signature.signature.nhashtype = signature.sigtype;
-  return Sighash.verify(
-    transaction,
-    signature.signature,
-    signature.publicKey,
-    signature.inputIndex,
-    this.output.script
-  );
+MultiSigInput.prototype.clearSignatures = function () {
+  this.signatures = new Array(this.publicKeys.length);
+
+  this._updateScript();
 };
 
+MultiSigInput.prototype.isFullySigned = function () {
+  return this.countSignatures() === this.threshold;
+};
+
+MultiSigInput.prototype.countMissingSignatures = function () {
+  return this.threshold - this.countSignatures();
+};
+
+MultiSigInput.prototype.countSignatures = function () {
+  return _.reduce(this.signatures, function (sum, signature) {
+    return sum + !!signature;
+  }, 0);
+};
+
+MultiSigInput.prototype.publicKeysWithoutSignature = function () {
+  var self = this;
+  return _.filter(this.publicKeys, function (publicKey) {
+    return !self.signatures[self.publicKeyIndex[publicKey.toString()]];
+  });
+};
+
+MultiSigInput.prototype.isValidSignature = function (transaction, signature) {
+  // FIXME: Refactor signature so this is not necessary
+  signature.signature.nhashtype = signature.sigtype;
+  return Sighash.verify(transaction, signature.signature, signature.publicKey, signature.inputIndex, this.output.script);
+};
 /**
  *
  * @param {Buffer[]} signatures
@@ -167,7 +177,9 @@ MultiSigInput.prototype.isValidSignature = function(transaction, signature) {
  * @param {Input} input
  * @returns {TransactionSignature[]}
  */
-MultiSigInput.normalizeSignatures = function(transaction, input, inputIndex, signatures, publicKeys) {
+
+
+MultiSigInput.normalizeSignatures = function (transaction, input, inputIndex, signatures, publicKeys) {
   return publicKeys.map(function (pubKey) {
     var signatureMatch = null;
     signatures = signatures.filter(function (signatureBuffer) {
@@ -183,15 +195,8 @@ MultiSigInput.normalizeSignatures = function(transaction, input, inputIndex, sig
         inputIndex: inputIndex,
         sigtype: Signature.SIGHASH_ALL
       });
-
       signature.signature.nhashtype = signature.sigtype;
-      var isMatch = Sighash.verify(
-          transaction,
-          signature.signature,
-          signature.publicKey,
-          signature.inputIndex,
-          input.output.script
-      );
+      var isMatch = Sighash.verify(transaction, signature.signature, signature.publicKey, signature.inputIndex, input.output.script);
 
       if (isMatch) {
         signatureMatch = signature;
@@ -200,17 +205,16 @@ MultiSigInput.normalizeSignatures = function(transaction, input, inputIndex, sig
 
       return true;
     });
-
     return signatureMatch ? signatureMatch : null;
   });
 };
 
 MultiSigInput.OPCODES_SIZE = 1; // 0
+
 MultiSigInput.SIGNATURE_SIZE = 73; // size (1) + DER (<=72)
 
-MultiSigInput.prototype._estimateSize = function() {
-  return MultiSigInput.OPCODES_SIZE +
-    this.threshold * MultiSigInput.SIGNATURE_SIZE;
+MultiSigInput.prototype._estimateSize = function () {
+  return MultiSigInput.OPCODES_SIZE + this.threshold * MultiSigInput.SIGNATURE_SIZE;
 };
 
 module.exports = MultiSigInput;

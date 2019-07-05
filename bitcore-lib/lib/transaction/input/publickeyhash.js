@@ -1,28 +1,39 @@
 'use strict';
 
+function _instanceof(left, right) { if (right != null && typeof Symbol !== "undefined" && right[Symbol.hasInstance]) { return right[Symbol.hasInstance](left); } else { return left instanceof right; } }
+
 var inherits = require('inherits');
 
 var $ = require('../../util/preconditions');
+
 var BufferUtil = require('../../util/buffer');
 
 var Hash = require('../../crypto/hash');
-var Input = require('./input');
-var Output = require('../output');
-var Sighash = require('../sighash');
-var Script = require('../../script');
-var Signature = require('../../crypto/signature');
-var TransactionSignature = require('../signature');
 
+var Input = require('./input');
+
+var Output = require('../output');
+
+var Sighash = require('../sighash');
+
+var Script = require('../../script');
+
+var Signature = require('../../crypto/signature');
+
+var TransactionSignature = require('../signature');
 /**
  * Represents a special kind of input of PayToPublicKeyHash kind.
  * @constructor
  */
+
+
 function PublicKeyHashInput() {
   Input.apply(this, arguments);
 }
-inherits(PublicKeyHashInput, Input);
 
+inherits(PublicKeyHashInput, Input);
 /* jshint maxparams: 5 */
+
 /**
  * @param {Transaction} transaction - the transaction to be signed
  * @param {PrivateKey} privateKey - the private key with which to sign the transaction
@@ -31,8 +42,9 @@ inherits(PublicKeyHashInput, Input);
  * @param {Buffer=} hashData - the precalculated hash of the public key associated with the privateKey provided
  * @return {Array} of objects that can be
  */
-PublicKeyHashInput.prototype.getSignatures = function(transaction, privateKey, index, sigtype, hashData) {
-  $.checkState(this.output instanceof Output);
+
+PublicKeyHashInput.prototype.getSignatures = function (transaction, privateKey, index, sigtype, hashData) {
+  $.checkState(_instanceof(this.output, Output));
   hashData = hashData || Hash.sha256ripemd160(privateKey.publicKey.toBuffer());
   sigtype = sigtype || Signature.SIGHASH_ALL;
 
@@ -46,6 +58,7 @@ PublicKeyHashInput.prototype.getSignatures = function(transaction, privateKey, i
       sigtype: sigtype
     })];
   }
+
   return [];
 };
 /* jshint maxparams: 3 */
@@ -59,36 +72,36 @@ PublicKeyHashInput.prototype.getSignatures = function(transaction, privateKey, i
  * @param {number=} signature.sigtype
  * @return {PublicKeyHashInput} this, for chaining
  */
-PublicKeyHashInput.prototype.addSignature = function(transaction, signature) {
+
+
+PublicKeyHashInput.prototype.addSignature = function (transaction, signature) {
   $.checkState(this.isValidSignature(transaction, signature), 'Signature is invalid');
-  this.setScript(Script.buildPublicKeyHashIn(
-    signature.publicKey,
-    signature.signature.toDER(),
-    signature.sigtype
-  ));
+  this.setScript(Script.buildPublicKeyHashIn(signature.publicKey, signature.signature.toDER(), signature.sigtype));
   return this;
 };
-
 /**
  * Clear the input's signature
  * @return {PublicKeyHashInput} this, for chaining
  */
-PublicKeyHashInput.prototype.clearSignatures = function() {
+
+
+PublicKeyHashInput.prototype.clearSignatures = function () {
   this.setScript(Script.empty());
   return this;
 };
-
 /**
  * Query whether the input is signed
  * @return {boolean}
  */
-PublicKeyHashInput.prototype.isFullySigned = function() {
+
+
+PublicKeyHashInput.prototype.isFullySigned = function () {
   return this.script.isPublicKeyHashIn();
 };
 
 PublicKeyHashInput.SCRIPT_MAX_SIZE = 73 + 34; // sigsize (1 + 72) + pubkey (1 + 33)
 
-PublicKeyHashInput.prototype._estimateSize = function() {
+PublicKeyHashInput.prototype._estimateSize = function () {
   return PublicKeyHashInput.SCRIPT_MAX_SIZE;
 };
 

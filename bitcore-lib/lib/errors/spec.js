@@ -1,7 +1,8 @@
 'use strict';
 
-var docsURL = 'http://bitcore.io/';
+function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
+var docsURL = 'http://bitcore.io/';
 module.exports = [{
   name: 'InvalidB58Char',
   message: 'Invalid Base58 character: {0} in {1}'
@@ -22,17 +23,16 @@ module.exports = [{
   message: 'Invalid network: must be "livenet" or "testnet", got {0}'
 }, {
   name: 'InvalidArgument',
-  message: function() {
-    return 'Invalid Argument' + (arguments[0] ? (': ' + arguments[0]) : '') +
-      (arguments[1] ? (' Documentation: ' + docsURL + arguments[1]) : '');
+  message: function message() {
+    return 'Invalid Argument' + (arguments[0] ? ': ' + arguments[0] : '') + (arguments[1] ? ' Documentation: ' + docsURL + arguments[1] : '');
   }
 }, {
   name: 'AbstractMethodInvoked',
   message: 'Abstract Method Invocation: {0}'
 }, {
   name: 'InvalidArgumentType',
-  message: function() {
-    return 'Invalid Argument for ' + arguments[2] + ', expected ' + arguments[1] + ' but got ' + typeof arguments[0];
+  message: function message() {
+    return 'Invalid Argument for ' + arguments[2] + ', expected ' + arguments[1] + ' but got ' + _typeof(arguments[0]);
   }
 }, {
   name: 'Unit',
@@ -90,19 +90,19 @@ module.exports = [{
     message: 'Dust amount detected in one output'
   }, {
     name: 'InvalidSatoshis',
-    message: 'Output satoshis are invalid',
+    message: 'Output satoshis are invalid'
   }, {
     name: 'FeeError',
     message: 'Internal Error on Fee {0}',
     errors: [{
       name: 'TooSmall',
-      message: 'Fee is too small: {0}',
+      message: 'Fee is too small: {0}'
     }, {
       name: 'TooLarge',
-      message: 'Fee is too large: {0}',
+      message: 'Fee is too large: {0}'
     }, {
       name: 'Different',
-      message: 'Unspent value is different from specified fee: {0}',
+      message: 'Unspent value is different from specified fee: {0}'
     }]
   }, {
     name: 'ChangeAddressMissing',

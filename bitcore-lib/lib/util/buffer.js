@@ -1,21 +1,28 @@
 'use strict';
 
+function _instanceof(left, right) { if (right != null && typeof Symbol !== "undefined" && right[Symbol.hasInstance]) { return right[Symbol.hasInstance](left); } else { return left instanceof right; } }
+
 var buffer = require('buffer');
+
 var assert = require('assert');
 
 var js = require('./js');
+
 var $ = require('./preconditions');
 
 function equals(a, b) {
   if (a.length !== b.length) {
     return false;
   }
+
   var length = a.length;
+
   for (var i = 0; i < length; i++) {
     if (a[i] !== b[i]) {
       return false;
     }
   }
+
   return true;
 }
 
@@ -31,9 +38,11 @@ module.exports = {
     $.checkArgumentType(buffer, 'Buffer', 'buffer');
     $.checkArgumentType(value, 'number', 'value');
     var length = buffer.length;
+
     for (var i = 0; i < length; i++) {
       buffer[i] = value;
     }
+
     return buffer;
   },
 
@@ -43,7 +52,7 @@ module.exports = {
    * @param {Buffer} original
    * @return {Buffer}
    */
-  copy: function(original) {
+  copy: function copy(original) {
     var buffer = Buffer.alloc(original.length);
     original.copy(buffer);
     return buffer;
@@ -57,7 +66,7 @@ module.exports = {
    * @return {boolean}
    */
   isBuffer: function isBuffer(arg) {
-    return buffer.Buffer.isBuffer(arg) || arg instanceof Uint8Array;
+    return buffer.Buffer.isBuffer(arg) || _instanceof(arg, Uint8Array);
   },
 
   /**
@@ -69,9 +78,11 @@ module.exports = {
   emptyBuffer: function emptyBuffer(bytes) {
     $.checkArgumentType(bytes, 'number', 'bytes');
     var result = new buffer.Buffer(bytes);
+
     for (var i = 0; i < bytes; i++) {
       result.write('\0', i);
     }
+
     return result;
   },
 
@@ -81,7 +92,6 @@ module.exports = {
    * Shortcut for <tt>buffer.Buffer.concat</tt>
    */
   concat: buffer.Buffer.concat,
-
   equals: equals,
   equal: equals,
 
@@ -105,9 +115,9 @@ module.exports = {
   integerAsBuffer: function integerAsBuffer(integer) {
     $.checkArgumentType(integer, 'number', 'integer');
     var bytes = [];
-    bytes.push((integer >> 24) & 0xff);
-    bytes.push((integer >> 16) & 0xff);
-    bytes.push((integer >> 8) & 0xff);
+    bytes.push(integer >> 24 & 0xff);
+    bytes.push(integer >> 16 & 0xff);
+    bytes.push(integer >> 8 & 0xff);
     bytes.push(integer & 0xff);
     return Buffer.from(bytes);
   },
@@ -153,9 +163,11 @@ module.exports = {
    */
   reverse: function reverse(param) {
     var ret = new buffer.Buffer(param.length);
+
     for (var i = 0; i < param.length; i++) {
       ret[i] = param[param.length - i - 1];
     }
+
     return ret;
   },
 
@@ -172,6 +184,5 @@ module.exports = {
     return new buffer.Buffer(string, 'hex');
   }
 };
-
 module.exports.NULL_HASH = module.exports.fill(Buffer.alloc(32), 0);
 module.exports.EMPTY_BUFFER = Buffer.alloc(0);

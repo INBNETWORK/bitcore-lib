@@ -1,7 +1,8 @@
 'use strict';
 
-var _ = require('lodash');
+function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
+var _ = require('lodash');
 /**
  * Determines whether a string contains only hexadecimal values
  *
@@ -9,16 +10,20 @@ var _ = require('lodash');
  * @param {string} value
  * @return {boolean} true if the string is the hexa representation of a number
  */
+
+
 var isHexa = function isHexa(value) {
   if (!_.isString(value)) {
     return false;
   }
+
   return /^[0-9a-fA-F]+$/.test(value);
 };
-
 /**
  * @namespace JSUtil
  */
+
+
 module.exports = {
   /**
    * Test if an argument is a valid JSON object. If it is, returns a truthy
@@ -29,17 +34,21 @@ module.exports = {
    */
   isValidJSON: function isValidJSON(arg) {
     var parsed;
+
     if (!_.isString(arg)) {
       return false;
     }
+
     try {
       parsed = JSON.parse(arg);
     } catch (e) {
       return false;
     }
-    if (typeof(parsed) === 'object') {
+
+    if (_typeof(parsed) === 'object') {
       return true;
     }
+
     return false;
   },
   isHexa: isHexa,
@@ -48,7 +57,7 @@ module.exports = {
   /**
    * Clone an array
    */
-  cloneArray: function(array) {
+  cloneArray: function cloneArray(array) {
     return [].concat(array);
   },
 
@@ -60,7 +69,7 @@ module.exports = {
    * @return {Object} The target object
    */
   defineImmutable: function defineImmutable(target, values) {
-    Object.keys(values).forEach(function(key){
+    Object.keys(values).forEach(function (key) {
       Object.defineProperty(target, key, {
         configurable: false,
         enumerable: true,
@@ -69,6 +78,7 @@ module.exports = {
     });
     return target;
   },
+
   /**
    * Checks that a value is a natural number, a positive integer or zero.
    *
@@ -76,9 +86,6 @@ module.exports = {
    * @return {Boolean}
    */
   isNaturalNumber: function isNaturalNumber(value) {
-    return typeof value === 'number' &&
-      isFinite(value) &&
-      Math.floor(value) === value &&
-      value >= 0;
+    return typeof value === 'number' && isFinite(value) && Math.floor(value) === value && value >= 0;
   }
 };

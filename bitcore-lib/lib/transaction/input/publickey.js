@@ -1,26 +1,35 @@
 'use strict';
 
+function _instanceof(left, right) { if (right != null && typeof Symbol !== "undefined" && right[Symbol.hasInstance]) { return right[Symbol.hasInstance](left); } else { return left instanceof right; } }
+
 var inherits = require('inherits');
 
 var $ = require('../../util/preconditions');
+
 var BufferUtil = require('../../util/buffer');
 
 var Input = require('./input');
-var Output = require('../output');
-var Sighash = require('../sighash');
-var Script = require('../../script');
-var Signature = require('../../crypto/signature');
-var TransactionSignature = require('../signature');
 
+var Output = require('../output');
+
+var Sighash = require('../sighash');
+
+var Script = require('../../script');
+
+var Signature = require('../../crypto/signature');
+
+var TransactionSignature = require('../signature');
 /**
  * Represents a special kind of input of PayToPublicKey kind.
  * @constructor
  */
+
+
 function PublicKeyInput() {
   Input.apply(this, arguments);
 }
-inherits(PublicKeyInput, Input);
 
+inherits(PublicKeyInput, Input);
 /**
  * @param {Transaction} transaction - the transaction to be signed
  * @param {PrivateKey} privateKey - the private key with which to sign the transaction
@@ -28,10 +37,12 @@ inherits(PublicKeyInput, Input);
  * @param {number=} sigtype - the type of signature, defaults to Signature.SIGHASH_ALL
  * @return {Array} of objects that can be
  */
-PublicKeyInput.prototype.getSignatures = function(transaction, privateKey, index, sigtype) {
-  $.checkState(this.output instanceof Output);
+
+PublicKeyInput.prototype.getSignatures = function (transaction, privateKey, index, sigtype) {
+  $.checkState(_instanceof(this.output, Output));
   sigtype = sigtype || Signature.SIGHASH_ALL;
   var publicKey = privateKey.toPublicKey();
+
   if (publicKey.toString() === this.output.script.getPublicKey().toString('hex')) {
     return [new TransactionSignature({
       publicKey: publicKey,
@@ -42,9 +53,9 @@ PublicKeyInput.prototype.getSignatures = function(transaction, privateKey, index
       sigtype: sigtype
     })];
   }
+
   return [];
 };
-
 /**
  * Add the provided signature
  *
@@ -54,35 +65,36 @@ PublicKeyInput.prototype.getSignatures = function(transaction, privateKey, index
  * @param {number=} signature.sigtype
  * @return {PublicKeyInput} this, for chaining
  */
-PublicKeyInput.prototype.addSignature = function(transaction, signature) {
+
+
+PublicKeyInput.prototype.addSignature = function (transaction, signature) {
   $.checkState(this.isValidSignature(transaction, signature), 'Signature is invalid');
-  this.setScript(Script.buildPublicKeyIn(
-    signature.signature.toDER(),
-    signature.sigtype
-  ));
+  this.setScript(Script.buildPublicKeyIn(signature.signature.toDER(), signature.sigtype));
   return this;
 };
-
 /**
  * Clear the input's signature
  * @return {PublicKeyHashInput} this, for chaining
  */
-PublicKeyInput.prototype.clearSignatures = function() {
+
+
+PublicKeyInput.prototype.clearSignatures = function () {
   this.setScript(Script.empty());
   return this;
 };
-
 /**
  * Query whether the input is signed
  * @return {boolean}
  */
-PublicKeyInput.prototype.isFullySigned = function() {
+
+
+PublicKeyInput.prototype.isFullySigned = function () {
   return this.script.isPublicKeyIn();
 };
 
 PublicKeyInput.SCRIPT_MAX_SIZE = 73; // sigsize (1 + 72)
 
-PublicKeyInput.prototype._estimateSize = function() {
+PublicKeyInput.prototype._estimateSize = function () {
   return PublicKeyInput.SCRIPT_MAX_SIZE;
 };
 

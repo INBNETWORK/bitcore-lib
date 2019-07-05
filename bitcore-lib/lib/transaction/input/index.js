@@ -1,5 +1,6 @@
-module.exports = require('./input');
+"use strict";
 
+module.exports = require('./input');
 module.exports.PublicKey = require('./publickey');
 module.exports.PublicKeyHash = require('./publickeyhash');
 module.exports.MultiSig = require('./multisig.js');

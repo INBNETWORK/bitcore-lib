@@ -1,3 +1,4 @@
-module.exports = require('./script');
+"use strict";
 
+module.exports = require('./script');
 module.exports.Interpreter = require('./interpreter');

@@ -1,32 +1,46 @@
 'use strict';
 
+function _instanceof(left, right) { if (right != null && typeof Symbol !== "undefined" && right[Symbol.hasInstance]) { return right[Symbol.hasInstance](left); } else { return left instanceof right; } }
+
 var _ = require('lodash');
+
 var BN = require('../crypto/bn');
+
 var buffer = require('buffer');
+
 var bufferUtil = require('../util/buffer');
+
 var JSUtil = require('../util/js');
+
 var BufferWriter = require('../encoding/bufferwriter');
+
 var Script = require('../script');
+
 var $ = require('../util/preconditions');
+
 var errors = require('../errors');
 
 var MAX_SAFE_INTEGER = 0x1fffffffffffff;
 
 function Output(args) {
-  if (!(this instanceof Output)) {
+  if (!_instanceof(this, Output)) {
     return new Output(args);
   }
+
   if (_.isObject(args)) {
     this.satoshis = args.satoshis;
+
     if (bufferUtil.isBuffer(args.script)) {
       this._scriptBuffer = args.script;
     } else {
       var script;
+
       if (_.isString(args.script) && JSUtil.isHexa(args.script)) {
         script = new buffer.Buffer(args.script, 'hex');
       } else {
         script = args.script;
       }
+
       this.setScript(script);
     }
   } else {
@@ -37,55 +51,51 @@ function Output(args) {
 Object.defineProperty(Output.prototype, 'script', {
   configurable: false,
   enumerable: true,
-  get: function() {
+  get: function get() {
     if (this._script) {
       return this._script;
     } else {
       this.setScriptFromBuffer(this._scriptBuffer);
       return this._script;
     }
-
   }
 });
-
 Object.defineProperty(Output.prototype, 'satoshis', {
   configurable: false,
   enumerable: true,
-  get: function() {
+  get: function get() {
     return this._satoshis;
   },
-  set: function(num) {
-    if (num instanceof BN) {
+  set: function set(num) {
+    if (_instanceof(num, BN)) {
       this._satoshisBN = num;
       this._satoshis = num.toNumber();
     } else if (_.isString(num)) {
       this._satoshis = parseInt(num);
       this._satoshisBN = BN.fromNumber(this._satoshis);
     } else {
-      $.checkArgument(
-        JSUtil.isNaturalNumber(num),
-        'Output satoshis is not a natural number'
-      );
+      $.checkArgument(JSUtil.isNaturalNumber(num), 'Output satoshis is not a natural number');
       this._satoshisBN = BN.fromNumber(num);
       this._satoshis = num;
     }
-    $.checkState(
-      JSUtil.isNaturalNumber(this._satoshis),
-      'Output satoshis is not a natural number'
-    );
+
+    $.checkState(JSUtil.isNaturalNumber(this._satoshis), 'Output satoshis is not a natural number');
   }
 });
 
-Output.prototype.invalidSatoshis = function() {
+Output.prototype.invalidSatoshis = function () {
   if (this._satoshis > MAX_SAFE_INTEGER) {
     return 'transaction txout satoshis greater than max safe integer';
   }
+
   if (this._satoshis !== this._satoshisBN.toNumber()) {
     return 'transaction txout satoshis has corrupted value';
   }
+
   if (this._satoshis < 0) {
     return 'transaction txout negative';
   }
+
   return false;
 };
 
@@ -97,17 +107,18 @@ Output.prototype.toObject = Output.prototype.toJSON = function toObject() {
   return obj;
 };
 
-Output.fromObject = function(data) {
+Output.fromObject = function (data) {
   return new Output(data);
 };
 
-Output.prototype.setScriptFromBuffer = function(buffer) {
+Output.prototype.setScriptFromBuffer = function (buffer) {
   this._scriptBuffer = buffer;
+
   try {
     this._script = Script.fromBuffer(this._scriptBuffer);
     this._script._isOutput = true;
-  } catch(e) {
-    if (e instanceof errors.Script.InvalidBuffer) {
+  } catch (e) {
+    if (_instanceof(e, errors.Script.InvalidBuffer)) {
       this._script = null;
     } else {
       throw e;
@@ -115,8 +126,8 @@ Output.prototype.setScriptFromBuffer = function(buffer) {
   }
 };
 
-Output.prototype.setScript = function(script) {
-  if (script instanceof Script) {
+Output.prototype.setScript = function (script) {
+  if (_instanceof(script, Script)) {
     this._scriptBuffer = script.toBuffer();
     this._script = script;
     this._script._isOutput = true;
@@ -129,35 +140,41 @@ Output.prototype.setScript = function(script) {
   } else {
     throw new TypeError('Invalid argument type: script');
   }
+
   return this;
 };
 
-Output.prototype.inspect = function() {
+Output.prototype.inspect = function () {
   var scriptStr;
+
   if (this.script) {
     scriptStr = this.script.inspect();
   } else {
     scriptStr = this._scriptBuffer.toString('hex');
   }
+
   return '<Output (' + this.satoshis + ' sats) ' + scriptStr + '>';
 };
 
-Output.fromBufferReader = function(br) {
+Output.fromBufferReader = function (br) {
   var obj = {};
   obj.satoshis = br.readUInt64LEBN();
   var size = br.readVarintNum();
+
   if (size !== 0) {
     obj.script = br.read(size);
   } else {
     obj.script = new buffer.Buffer([]);
   }
+
   return new Output(obj);
 };
 
-Output.prototype.toBufferWriter = function(writer) {
+Output.prototype.toBufferWriter = function (writer) {
   if (!writer) {
     writer = new BufferWriter();
   }
+
   writer.writeUInt64LEBN(this._satoshisBN);
   var script = this._scriptBuffer;
   writer.writeVarintNum(script.length);
