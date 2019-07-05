@@ -79,7 +79,7 @@
     "multisig"
   ],
   "license": "MIT",
-  "main": "index.js",
+  "main": "bitcore-lib.js",
   "name": "bitcore-lib",
   "repository": {
     "type": "git",
